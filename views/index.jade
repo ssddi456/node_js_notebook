@@ -1,0 +1,58 @@
+extends layout
+append css
+  style.
+    .editor{
+      height : 400px;
+    }
+block content
+  .navbar.navbar-static-top
+    .container
+      .navbar-brand.text-muted
+        | note booke
+      .navbar-right.navbar-form.form
+        .form-group
+          input.form-control(type="text",placeholder="search...")
+          button.btn.btn-default
+            i.glyphicon.glyphicon-search
+          button.btn.btn-primary(data-bind="click:add_note")
+            | add note
+  hr
+  +ko('foreach : notes')
+    +ko('if : visible')
+      .container(data-bind="ifnot : fold")
+        .row
+          .form.form-horizontal
+            .form-group
+              .col-xs-10
+                input.form-control(type="text",placeholder="name...",data-bind="value:name")
+              .col-xs-2
+                .btn-group
+                  button.btn.btn-default(data-bind="click:exec")
+                    i.glyphicon.glyphicon-play
+                  button.btn.btn-default(data-bind="click: function(){fold(true)}")
+                    i.glyphicon.glyphicon-minus
+                .btn-group
+                  +ko('if : $parent.notes().length != 1 ')
+                    button.btn.btn-default(data-bind="click: $parent.remove_note")
+                      i.glyphicon.glyphicon-remove
+        .row
+          .editor(data-bind="editor")
+        +ko('if : res')
+          .row
+            each res in ['stdout','stderr','exceptions']
+              .col-md-12(data-bind="if : res().#{res} && res().#{res}.length")
+                h4=res
+                smap(data-bind="text : res().#{res}")
+
+      .container(data-bind="if : fold, click: function(){fold(false)}")
+        h3(data-bind="text: name")
+        +ko('if : res')
+          smap(data-bind="text : res().stdout")
+      hr
+
+append js
+  script(type="application/javascript", src="//cdn.staticfile.org/ace/1.1.3/ace.js")
+  script(type="application/javascript", src="//cdn.staticfile.org/ace/1.1.3/ext-language_tools.js")
+  script.
+    var notes = !{JSON.stringify(notes)};
+  script(src="/javascripts/app.js")
