@@ -1,0 +1,1 @@
+createobject("wscript.shell").run "cmd /c node D:\gitchunk\node_js_notebook\bin\www",0

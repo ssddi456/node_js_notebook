@@ -1,14 +1,27 @@
 extends layout
 append css
   style.
+    body{
+      background-color: #E6F0F1;
+    }
     .editor{
       height : 400px;
+    }
+    .navbar{
+      margin-bottom:0;
+      background-color:#465661;
+    }
+    hr.navhr{
+      margin-top:0;
     }
 block content
   .navbar.navbar-static-top
     .container
-      .navbar-brand.text-muted
+      .navbar-brand(style="color:white")
         | note booke
+        span(data-bind="click:restart")
+          i.glyphicon.glyphicon-refresh
+
       .navbar-right.navbar-form.form
         .form-group
           input.form-control(type="text",placeholder="search...")
@@ -16,7 +29,7 @@ block content
             i.glyphicon.glyphicon-search
           button.btn.btn-primary(data-bind="click:add_note")
             | add note
-  hr
+  hr.navhr
   +ko('foreach : notes')
     +ko('if : visible')
       .container(data-bind="ifnot : fold")
@@ -42,7 +55,8 @@ block content
             each res in ['stdout','stderr','exceptions']
               .col-md-12(data-bind="if : res().#{res} && res().#{res}.length")
                 h4=res
-                smap(data-bind="text : res().#{res}")
+                smap
+                  pre(data-bind="text : res().#{res}")
 
       .container(data-bind="if : fold, click: function(){fold(false)}")
         h3(data-bind="text: name")

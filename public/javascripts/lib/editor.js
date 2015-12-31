@@ -5,16 +5,21 @@ define([
 ){
   ko.bindingHandlers.editor = {
     'init' : function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+
       $(element).on('keyup keydown',function( e ){
         e.stopPropagation();
       });
+
       var langTools = ace.require("ace/ext/language_tools");
       var editor = ace.edit(element);
 
       editor.setValue(viewModel.code());
+      editor.clearSelection();
+
       // throtll sync editor content to vm;      
       var change = ko.observable();
       editor.on("change", change.extend({ rateLimit: 500 }));
+
       change.subscribe(function() {
         console.log( 'writed');
         viewModel.code( editor.getValue() );

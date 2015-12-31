@@ -79,8 +79,14 @@ var code_cache_path = path.join(__dirname,'../data/code_cache');
 
 function exec_code ( code, done ) {
   try{
-
     var tmp_file_name = path.join(code_cache_path, uuid() + '.js');
+    var records = 0;
+
+    code = code.replace(/(?:\n)\s*note_exec\s*\((.*)\)/g, function($, $code ) {
+        return '\nconsole.log(\''  + (++records) + ' : ' + $code.replace(/(['"])/g,'\\\\$1') + '\');\n'
+              +'console.log('+ $code +');\n';
+    });
+
     fs.writeFileSync(tmp_file_name, code);
     var cp = child_process.fork(tmp_file_name,{ silent : true});
   } catch(e){

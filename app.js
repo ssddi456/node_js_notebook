@@ -19,8 +19,16 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+
 app.use('/', routes);
 app.use('/note', note);
+
+app.use('/restart', function( req, resp ){
+  resp.end('okey');
+  setTimeout(function() {
+    process.exit(3);
+  },1e3);
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -28,6 +36,7 @@ app.use(function(req, res, next) {
   err.status = 404;
   next(err);
 });
+
 
 // error handlers
 

@@ -32,13 +32,23 @@ require([
   }
 
   var vm = {
-    notes : ko.observableArray( notes.map(doc_to_note) ),
-    search : function() { },
+    notes   : ko.observableArray( notes.map(doc_to_note) ),
+    restart    : function() {
+      $.post('/restart',function() {
+         location.reload(); 
+      });
+    },
+    search  : function() { },
     add_note: function() {
       $.post('/note/add',function( doc ) {
         var new_note = doc_to_note(doc);
+
+        vm.notes().forEach(function(note) {
+           note.fold(true);
+        });
+
         vm.notes.unshift( new_note);
-        new_note.visible(true);
+        new_note.fold(false);
       });
     },
     remove_note : function( note ) {
