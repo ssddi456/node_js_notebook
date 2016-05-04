@@ -14,54 +14,73 @@ append css
     hr.navhr{
       margin-top:0;
     }
+    hr{
+      border-top:1px solid rgba(123, 164, 171, 0.49);
+    }
+    .h3.title-fold{
+      margin: 0;
+      line-height: 34px;
+    }
 block content
   .navbar.navbar-static-top
-    .container
-      .navbar-brand(style="color:white")
-        | note booke
-        span(data-bind="click:restart")
-          i.glyphicon.glyphicon-refresh
-
-      .navbar-right.navbar-form.form
-        .form-group
-          input.form-control(type="text",placeholder="search...")
-          button.btn.btn-default
-            i.glyphicon.glyphicon-search
-          button.btn.btn-primary(data-bind="click:add_note")
-            | add note
+    .container-fluid
+      .navbar-header(style="color:white")
+        .navbar-brand
+          | note booke  
+          span(data-bind="click:restart")
+            i.glyphicon.glyphicon-refresh
+      .nav.navbar-nav.navbar-right
+        .navbar-form.form
+          .form-group
+            input.form-control(type="text",placeholder="search...")
+            button.btn.btn-default
+              i.glyphicon.glyphicon-search
+            button.btn.btn-primary(data-bind="click:add_note")
+              | add note
   hr.navhr
-  +ko('foreach : notes')
-    +ko('if : visible')
-      .container(data-bind="ifnot : fold")
-        .row
-          .form.form-horizontal
-            .form-group
-              .col-xs-10
-                input.form-control(type="text",placeholder="name...",data-bind="value:name")
-              .col-xs-2
-                .btn-group
-                  button.btn.btn-default(data-bind="click:exec")
-                    i.glyphicon.glyphicon-play
-                  button.btn.btn-default(data-bind="click: function(){fold(true)}")
-                    i.glyphicon.glyphicon-minus
-                .btn-group
-                  +ko('if : $parent.notes().length != 1 ')
-                    button.btn.btn-default(data-bind="click: $parent.remove_note")
-                      i.glyphicon.glyphicon-remove
-        .row
-          .editor(data-bind="editor")
-        +ko('if : res')
+  .container-fluid(data-bind='foreach : notes')
+      +ko('if : visible')
+        .container-fluid(data-bind="ifnot : fold")
           .row
-            each res in ['stdout','stderr','exceptions']
-              .col-md-12(data-bind="if : res().#{res} && res().#{res}.length")
-                h4=res
-                smap
+            .form.form-horizontal
+              .form-group
+                .col-xs-10
+                  input.form-control(type="text",placeholder="name...",data-bind="value:name")
+                .col-xs-2
+                  .btn-group
+                    button.btn.btn-default(data-bind="click:exec")
+                      i.glyphicon.glyphicon-play
+                    button.btn.btn-default(data-bind="click: function(){fold(true)}")
+                      i.glyphicon.glyphicon-minus
+                  .btn-group
+                    +ko('if : $parent.notes().length != 1 ')
+                      button.btn.btn-default(data-bind="click: $parent.remove_note")
+                        i.glyphicon.glyphicon-remove
+          .row
+            .editor(data-bind="editor")
+          +ko('if : res')
+            .row
+              each res in ['stdout','stderr','exceptions']
+                .col-md-12(data-bind="if : res().#{res} && res().#{res}.length")
+                  h4=res
                   pre(data-bind="text : res().#{res}")
 
-      .container(data-bind="if : fold, click: function(){fold(false)}")
-        h3(data-bind="text: name")
-        +ko('if : res')
-          smap(data-bind="text : res().stdout")
+        .container-fluid(data-bind="if : fold")
+          .row
+            .col-xs-10
+              .h3.title-fold(data-bind="text: name")
+            .col-xs-2
+              .btn-group
+                button.btn.btn-default(data-bind="click: function(){fold(false)}")
+                  i.glyphicon.glyphicon-plus
+                button.btn.btn-default(data-bind="click : toggle_res_fold")
+                  i.glyphicon(data-bind="css:{\
+                                          'glyphicon-chevron-down' : res_fold(),\
+                                          'glyphicon-chevron-up' : !res_fold(),\
+                                        }")
+            +ko('if : res')
+              .collapse(data-bind="css:{ in : !res_fold() }")
+                pre(data-bind="text : res().stdout")
       hr
 
 append js

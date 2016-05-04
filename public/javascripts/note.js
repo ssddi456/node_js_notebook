@@ -17,6 +17,12 @@ define([
 
     this.visible = ko.observable(true);
     this.fold = ko.observable(true);
+    this.res_fold = ko.observable(true);
+
+    var self = this;
+    this.toggle_res_fold = function() {
+      self.res_fold( !self.res_fold() );
+    }
   }
 
   var fn = note.prototype;
