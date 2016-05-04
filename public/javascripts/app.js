@@ -20,19 +20,12 @@ require([
       console.log('xhr failed', arguments );
     });
 
-  function doc_to_note( doc  ) {
-    var new_note = new note(doc.id);
-    new_note.name(doc.name);
-    new_note.code( decodeURIComponent(doc.code));
-    new_note.res(doc.res);
-
-    new_note.init();
-
-    return new_note;
-  }
-
+  var doc_to_note = note.doc_to_note;
+  
+  var bootstrap_node = doc_to_note(bootstrap);
   var vm = {
     notes   : ko.observableArray( notes.map(doc_to_note) ),
+    bootstrap  : bootstrap_node,
     restart    : function() {
       $.post('/restart',function() {
          location.reload(); 

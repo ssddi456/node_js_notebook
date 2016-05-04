@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-
+process.env.DEBUG = '* -send -express:*'
 var cluster = require('cluster');
 
 if (cluster.isMaster) {

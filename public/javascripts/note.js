@@ -17,7 +17,12 @@ define([
 
     this.visible = ko.observable(true);
     this.fold = ko.observable(true);
-    this.res_fold = ko.observable(true);
+    this.res_fold = ko.observable(false);
+
+
+    this.is_bootstrap = false;
+
+    this.index = ko.observable(0);
 
     var self = this;
     this.toggle_res_fold = function() {
@@ -39,8 +44,12 @@ define([
       }
 
       self.saving(true);
+      var save_url = '/note/save';
+      if( self.is_bootstrap ){
+        save_url = '/note/save_bootstrap';
+      }
 
-      $.post('/note/save',{
+      $.post(save_url,{
         timestamp : Date.now(),
         id        : self.id,
         name      : self.name(),
@@ -50,7 +59,7 @@ define([
         self.saving(false);
       })
       .fail(function() {
-        this.saving(false);
+        self.saving(false);
       });
     },500);
 
@@ -69,6 +78,23 @@ define([
       self.res(res.res);
     })
   };
+
+
+  note.doc_to_note = function ( doc  ) {
+    var new_note = new note(doc._id);
+
+
+    new_note.name(doc.name);
+    new_note.code( decodeURIComponent(doc.code));
+    new_note.res(doc.res);
+    
+    new_note.is_bootstrap = doc.is_bootstrap;
+    new_note.index(doc.index);
+
+    new_note.init();
+
+    return new_note;
+  }
 
   return note;
 });
