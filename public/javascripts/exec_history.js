@@ -31,7 +31,7 @@ define([
 
   histories.subscribe(function( node ) {
     if( node.length > 10 ){
-      node.slice(0, 10);
+      node = node.slice(0, 10);
       histories(node);
     }
   });

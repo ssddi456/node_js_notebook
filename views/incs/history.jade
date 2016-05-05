@@ -6,34 +6,37 @@ style.
     right: 0;
     top: 50px;
     bottom: 0;
+  }
+  .exec_history_wrapper{
+    height: 100%;
     overflow:auto;
   }
 
 
-
 +ko('ifnot: exec_history.fold')
-  .col-xs-2.exec_history(data-bind='with : exec_history')
-    +ko('if: histories().length == 0')
-      .bs-callout.bs-callout-info
-        h4 no history here
+  .col-xs-6.exec_history
+    .exec_history_wrapper(data-bind='with : exec_history')
+      +ko('if: histories().length == 0')
+        .bs-callout.bs-callout-info
+          h4 no history here
 
-    +ko('if: histories().length != 0')
-      +ko('foreach : histories')
-        .bs-callout(data-bind="css:{\
-                                'bs-callout-info' : $data.end,\
-                                'bs-callout-warning' : $data.res() && $data.res().exception,\
-                              }")
-          h4(data-bind="text : name")
-          +ko('if: $data.end')
-            p(data-bind="text : end() > 0 ? ('takes time :' + ( end() - start ) + 'ms'): 'running'")
-          +ko('ifnot: $data.end')
-            p running...
-          +ko('if : $data.res')
-            +ko('with : res')
-              .res-container
-                each res in ['stdout','stderr','exceptions','exports']
-                  div(data-bind="if : $data.#{res} && #{res}.length")
-                    pre
-                      b=res
-                    pre
-                      span(data-bind="text : #{res}")
+      +ko('if: histories().length != 0')
+        +ko('foreach : histories')
+          .bs-callout(data-bind="css:{\
+                                  'bs-callout-info' : $data.end,\
+                                  'bs-callout-warning' : $data.res() && $data.res().exception,\
+                                }")
+            h4(data-bind="text : name")
+            +ko('if: $data.end')
+              p(data-bind="text : end() > 0 ? ('takes time :' + ( end() - start ) + 'ms'): 'running'")
+            +ko('ifnot: $data.end')
+              p running...
+            +ko('if : $data.res')
+              +ko('with : res')
+                .res-container
+                  each res in ['stdout','stderr','exceptions','exports']
+                    div(data-bind="if : $data.#{res} && #{res}.length")
+                      pre
+                        b=res
+                      pre
+                        span(data-bind="text : #{res}")

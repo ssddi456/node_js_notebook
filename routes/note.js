@@ -28,15 +28,18 @@ router.post('/add',function( req, res, next ) {
 
 router.post('*',function( req, resp, next ) {
   var id = req.body.id;
-  storage.get( id, function(err ,res ) {
+  storage.get( id, function(err, res ) {
     if( err )    {
       next(err);
       return;
     }
+
     if( res ){
+      resp.locals.note = res;
       next();
       return;
     }
+
     resp.json({
       error : 1,
       message : 'note not found'
@@ -61,6 +64,7 @@ router.post('/remove',function( req, res, next ) {
 
 router.post('/save',function( req, res, next ) {
   var note = {};
+
   for(var k in req.body){
     if( k != 'id' && req.body.hasOwnProperty(k) ){
       note[k] = req.body[k];
@@ -172,7 +176,7 @@ function exec_code ( code, done ) {
     out.stderr = Buffer.concat(stderr).toString();
     out.exceptions = exceptions;
     out.code = code;
-    fs.unlinkSync(tmp_file_name);
+    fs.unlink(tmp_file_name);
     done(null, out);
   });
 }
