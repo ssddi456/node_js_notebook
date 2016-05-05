@@ -26,7 +26,7 @@ require([
   
   var bootstrap_node = doc_to_note(bootstrap);
   var vm = {
-    notes   : ko.observableArray( notes.map(doc_to_note) ),
+    notes   : ko.observableArray(),
     bootstrap  : bootstrap_node,
     restart    : function() {
       $.post('/restart',function() {
@@ -57,8 +57,27 @@ require([
     },
     exec_history : exec_history
   };
+  var _nodes = notes.map(doc_to_note);
 
-  vm.notes()[0].fold(false);
+  if( _nodes[0] ){
+    var node = _nodes.shift();
+    vm.notes.push(node);
+    node.fold(false);
+  }
 
   ko.applyBindings(vm);
+
+  // try to get better init performance
+  
+  function async_init_view(){
+    if( _nodes.length ){
+      var node = _nodes.shift();
+      vm.notes.push(node);
+      setTimeout(function() {
+        async_init_view();
+      },50)
+    }
+  }
+  async_init_view();
+
 });

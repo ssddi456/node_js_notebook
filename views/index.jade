@@ -3,7 +3,7 @@ append css
   link(rel="stylesheet", href="/stylesheets/main.css")
   style.
     body{
-      background-color: #E6F0F1;
+      background-color: #F0F0F0;
     }
     .editor{
       height : 400px;
@@ -18,6 +18,10 @@ append css
     hr{
       border-top:1px solid rgba(123, 164, 171, 0.49);
     }
+
+    .main-row{
+      padding-left:60px;
+    }
     .h3.title-fold{
       margin: 0;
       line-height: 34px;
@@ -26,7 +30,7 @@ append css
       max-height:200px;
     }
     .bootstrap-block.affix{
-      background-color: #E6F0F1;
+      background-color: #F0F0F0;
       z-index: 20000000;
       width: 100%;
       top:0;
@@ -36,7 +40,7 @@ append css
     }
 
     pre{
-      margin-top : 10px;
+      margin:0;
     }
     .res-container pre{
       max-height: 300px;
@@ -67,7 +71,7 @@ block content
               | add note
   hr.navhr
   .row
-    div(data-bind="css:{\
+    .main-row(data-bind="css:{\
                       'col-xs-12' : exec_history.fold,\
                       'col-xs-10' : !exec_history.fold(),\
                     }")
@@ -75,17 +79,19 @@ block content
         .container-fluid.bootstrap-block(data-bind='with : bootstrap', 
                           data-spy="-affix",
                           data-offset-top="100")
-          .bootstrap-wrapper
-            .row
-              .col-xs-10
-                .h3.title-fold bootstrap code
-              .col-xs-2
-                .btn-group
-                  button.btn.btn-default(data-bind="click: function(){fold( !fold() )}")
-                    i.glyphicon(data-bind="css:{\
-                                            'glyphicon-minus': !fold(),\
-                                            'glyphicon-plus' : fold()\
-                                          }")
+          .bootstrap-wrapper.form-horizontal
+            .form-group
+              .container-fluid
+                .row
+                  .col-xs-10
+                    .h3.title-fold bootstrap code
+                  .col-xs-2
+                    .btn-group
+                      button.btn.btn-default(data-bind="click: function(){fold( !fold() )}")
+                        i.glyphicon(data-bind="css:{\
+                                                'glyphicon-minus': !fold(),\
+                                                'glyphicon-plus' : fold()\
+                                              }")
 
           .row
             .col-xs-12
@@ -116,27 +122,31 @@ block content
                             i.glyphicon.glyphicon-remove
               .row
                 .editor(data-bind="editor")
-              +ko('if : res')
 
+              +ko('if : res')
                 .res-container(data-bind='with : res')
                   each res in ['stdout','stderr','exceptions','exports']
                     .row(data-bind="if : $data.#{res} && #{res}.length")
-                      h4=res
-                      pre(data-bind="text : #{res}")
+                      pre
+                        b=res
+                      pre
+                        span(data-bind="text : #{res}")
 
             +ko("if : fold")
               .row
-                .col-xs-10
-                  .h3.title-fold(data-bind="text: name")
-                .col-xs-2
-                  .btn-group
-                    button.btn.btn-default(data-bind="click: function(){fold(false)}")
-                      i.glyphicon.glyphicon-plus
-                    button.btn.btn-default(data-bind="click : toggle_res_fold")
-                      i.glyphicon(data-bind="css:{\
-                                              'glyphicon-chevron-down' : res_fold(),\
-                                              'glyphicon-chevron-up' : !res_fold(),\
-                                            }")
+                .form.form-horizontal
+                  .form-group
+                    .col-xs-10
+                      .h3.title-fold(data-bind="text: name")
+                    .col-xs-2
+                      .btn-group
+                        button.btn.btn-default(data-bind="click: function(){fold(false)}")
+                          i.glyphicon.glyphicon-plus
+                        button.btn.btn-default(data-bind="click : toggle_res_fold")
+                          i.glyphicon(data-bind="css:{\
+                                                  'glyphicon-chevron-down' : res_fold(),\
+                                                  'glyphicon-chevron-up' : !res_fold(),\
+                                                }")
               +ko('if : res')
                 .row.res-container
                   .collapse(data-bind="css:{ in : !res_fold() }")

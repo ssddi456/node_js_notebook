@@ -33,5 +33,7 @@ style.
               .res-container
                 each res in ['stdout','stderr','exceptions','exports']
                   div(data-bind="if : $data.#{res} && #{res}.length")
-                    p=res
-                    pre(data-bind="text : #{res}")
+                    pre
+                      b=res
+                    pre
+                      span(data-bind="text : #{res}")

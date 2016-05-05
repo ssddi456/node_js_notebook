@@ -12,14 +12,14 @@ define([
     this.id   = id;
 
     this.name = ko.observable('');
-    this.code = ko.observable('here is some code');
+    this.code = ko.observable('here is some code').extend({ rateLimit : 300 });
 
     this.res = ko.observable();
     this.saving = ko.observable(false);
 
     this.visible = ko.observable(true);
     this.fold = ko.observable(true);
-    this.res_fold = ko.observable(false);
+    this.res_fold = ko.observable(true);
 
 
     this.is_bootstrap = false;
@@ -37,7 +37,7 @@ define([
   fn.init = function() {
     var self = this;
 
-    var _sync = _.throttle(function() {
+    var _sync = function() {
       if( self.saving() ){
         setTimeout(function() {
           _sync();
@@ -63,7 +63,7 @@ define([
       .fail(function() {
         self.saving(false);
       });
-    },500);
+    };
 
     this.name.subscribe(_sync);
     this.code.subscribe(_sync);
