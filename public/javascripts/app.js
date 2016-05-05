@@ -1,8 +1,10 @@
 require([
+  './exec_history',
   './note',
   'ko',
   './lib/editor'
 ],function(
+  exec_history,
   note,
   ko,
   editor
@@ -52,7 +54,8 @@ require([
           vm.notes.remove(note);
         });
       }
-    }
+    },
+    exec_history : exec_history
   };
 
   vm.notes()[0].fold(false);

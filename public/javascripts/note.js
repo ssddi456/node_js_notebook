@@ -1,7 +1,9 @@
 define([
+  './exec_history',
   '_',
   'ko'
 ],function(
+  exec_history,
   __,
   ko
 ){
@@ -72,11 +74,14 @@ define([
       return;
     }
     var self = this;
+    var start = Date.now();
+    var record = exec_history.add_exec_history(self.name());
     $.post('/note/exec',{
       id : self.id
     },function(res) {
       self.res(res.res);
-    })
+      record.res(res.res);
+    });
   };
 
 

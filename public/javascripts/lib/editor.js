@@ -6,7 +6,7 @@ define([
   ko.bindingHandlers.editor = {
     'init' : function(element, valueAccessor, allBindings, viewModel, bindingContext) {
 
-      $(element).on('keyup keydown',function( e ){
+      $(element).on('keyup keydown mousewheel',function( e ){
         e.stopPropagation();
       });
 
