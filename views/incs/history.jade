@@ -26,7 +26,12 @@ style.
                                   'bs-callout-info' : $data.end,\
                                   'bs-callout-warning' : $data.res() && $data.res().exception,\
                                 }")
-            h4(data-bind="text : name")
+            h4
+              +ko("text : name")
+              |  
+              span(data-bind="click: function(){ $parent.histories.remove($data); }")
+                i.glyphicon.glyphicon-remove
+
             +ko('if: $data.end')
               p(data-bind="text : end() > 0 ? ('takes time :' + ( end() - start ) + 'ms'): 'running'")
             +ko('ifnot: $data.end')
