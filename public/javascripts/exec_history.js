@@ -26,7 +26,7 @@ define([
       histories.unshift(new_exec);
       return new_exec;
     },
-    fold : ko.observable(false)
+    fold : ko.observable(true)
   };
 
   histories.subscribe(function( node ) {

@@ -1,81 +1,35 @@
 extends layout
 append css
   link(rel="stylesheet", href="/stylesheets/main.css")
-  style.
-    body{
-      background-color: #F0F0F0;
-    }
-    .editor{
-      height : 400px;
-    }
-    .navbar{
-      margin-bottom:0;
-      background-color:#465661;
-    }
-    hr.navhr{
-      margin-top:0;
-    }
-    hr{
-      border-top:1px solid rgba(123, 164, 171, 0.49);
-    }
 
-    .main-row{
-      padding-left:60px;
-    }
-    .h3.title-fold{
-      margin: 0;
-      line-height: 34px;
-    }
-    .bootstrap-block{
-      max-height:200px;
-    }
-    .bootstrap-block.affix{
-      background-color: #F0F0F0;
-      z-index: 20000000;
-      width: 100%;
-      top:0;
-    }
-    .bootstrap-block.affix .bootstrap-wrapper{
-      margin : 10px 0;
-    }
-
-    pre{
-      margin:0;
-    }
-    .res-container pre{
-      max-height: 300px;
-      overflow: auto;
-    }
 block content
   .navbar.navbar-static-top
     .container-fluid
-      .navbar-header(style="color:white")
-        .navbar-brand
-          | note booke  
-          span(data-bind="click:restart")
-            i.glyphicon.glyphicon-refresh
-      .nav.navbar-nav.navbar-right
-        .navbar-form.form
-          .form-group
-            button.btn.btn-default(data-bind="click: function(){ exec_history.fold(!exec_history.fold()) }")
-              i.glyphicon(data-bind="css:{\
-                                      'glyphicon-plus' : exec_history.fold,\
-                                      'glyphicon-minus' : !exec_history.fold(),\
-                                    }")
-              | toggle history
-          .form-group
-            input.form-control(type="text",placeholder="search...")
-            button.btn.btn-default
-              i.glyphicon.glyphicon-search
-            button.btn.btn-primary(data-bind="click:add_note")
-              | add note
+      .nav.navbar-form
+        .row
+          .col
+            .row
+              button.btn.btn-default(data-bind="click: function(){ exec_history.fold(!exec_history.fold()) }")
+                i.glyphicon(data-bind="css:{\
+                                        'glyphicon-plus' : exec_history.fold,\
+                                        'glyphicon-minus' : !exec_history.fold(),\
+                                      }",
+                            style="font-size:2em;")
+                br
+                | history
+          .col
+            .row
+              button.btn.btn-default(data-bind="click:add_note")
+                | add note
+            .row
+              button.btn.btn-default(data-bind="click:add_note")
+                | add note
+
   hr.navhr
+
   .container-fluid
     .row
-      .main-row(data-bind="css:{\
-                        'col-xs-12' : exec_history.fold,\
-                        'col-xs-6' : !exec_history.fold(),\
-                      }")
+      .main-row.col-xs-12
         .bootstrap-block
           .container-fluid.bootstrap-block(data-bind='with : bootstrap', 
                             data-spy="-affix",
@@ -101,58 +55,63 @@ block content
                 +ko('if : fold')
                   pre(data-bind="text:code")
 
-        hr
         .container-fluid(data-bind='foreach : notes')
-          .container-fluid
-            +ko('if : visible')
-              +ko("ifnot : fold")
-                .row
-                  .form.form-horizontal
-                    .form-group
-                      .col-xs-9
-                        input.form-control(type="text",placeholder="name...",data-bind="value:name")
-                      .col-xs-3
-                        .btn-group
-                          button.btn.btn-default(data-bind="click: function(){fold(true)}")
-                            i.glyphicon.glyphicon-minus
-                          button.btn.btn-default(data-bind="click:exec")
-                            i.glyphicon.glyphicon-play
-                        .btn-group
-                          +ko('if : $parent.notes().length != 1 ')
-                            button.btn.btn-default(data-bind="click: $parent.remove_note")
-                              i.glyphicon.glyphicon-remove
-                .row
-                  .editor(data-bind="editor")
+          .note(data-bind="css:{\
+                              'current' : $data == $root.current_note()\
+                          },\
+                          click : function(){ $root.current_note($data) }")
+            .container-fluid
+              +ko('if : visible')
+                +ko("ifnot : fold")
+                  .row
+                      .form.form-horizontal
+                        .form-group
+                          .col-xs-9
+                            input.form-control(type="text",placeholder="name...",data-bind="value:name")
+                          .col-xs-3
+                            .btn-group
+                              button.btn.btn-default(data-bind="click: function(){fold(true)}")
+                                i.glyphicon.glyphicon-minus
+                              button.btn.btn-default(data-bind="click:exec")
+                                i.glyphicon.glyphicon-play
+                            .btn-group
+                              +ko('if : $parent.notes().length != 1 ')
+                                button.btn.btn-default(data-bind="click: $parent.remove_note")
+                                  i.glyphicon.glyphicon-remove
+                  .row
+                    .col-xs-1
+                    .col-xs-11
+                      .editor(data-bind="editor")
 
-                +ko('if : res')
-                  .res-container(data-bind='with : res')
-                    each res in ['stdout','stderr','exceptions','exports']
-                      .row(data-bind="if : $data.#{res} && #{res}.length")
-                        pre
-                          b=res
-                        pre
-                          span(data-bind="text : #{res}")
+                  +ko('if : res')
+                    .res-container(data-bind='with : res')
+                      each res in ['stdout','stderr','exceptions','exports']
+                        .row(data-bind="if : $data.#{res} && #{res}.length")
 
-              +ko("if : fold")
-                .row
-                  .form.form-horizontal
-                    .form-group
-                      .col-xs-9
-                        .h3.title-fold(data-bind="text: name")
-                      .col-xs-3
-                        .btn-group
-                          button.btn.btn-default(data-bind="click: function(){fold(false)}")
-                            i.glyphicon.glyphicon-plus
-                          button.btn.btn-default(data-bind="click : toggle_res_fold")
-                            i.glyphicon(data-bind="css:{\
-                                                    'glyphicon-chevron-down' : res_fold(),\
-                                                    'glyphicon-chevron-up' : !res_fold(),\
-                                                  }")
-                +ko('if : res')
-                  .row.res-container
-                    .collapse(data-bind="css:{ in : !res_fold() }")
-                      pre(data-bind="text : res().stdout")
-          hr
+                          .col-xs-1
+                            .res_label=res
+                          .col-xs-11
+                            pre(data-bind="text : #{res}")
+
+                +ko("if : fold")
+                  .row
+                    .form.form-horizontal
+                      .form-group
+                        .col-xs-9
+                          .h3.title-fold(data-bind="text: name")
+                        .col-xs-3
+                          .btn-group
+                            button.btn.btn-default(data-bind="click: function(){fold(false)}")
+                              i.glyphicon.glyphicon-plus
+                            button.btn.btn-default(data-bind="click : toggle_res_fold")
+                              i.glyphicon(data-bind="css:{\
+                                                      'glyphicon-chevron-down' : res_fold(),\
+                                                      'glyphicon-chevron-up' : !res_fold(),\
+                                                    }")
+                  +ko('if : res')
+                    .row.res-container
+                      .collapse(data-bind="css:{ in : !res_fold() }")
+                        pre(data-bind="text : res().stdout")
 
     include ./incs/history.jade
 
