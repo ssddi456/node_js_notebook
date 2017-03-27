@@ -1,0 +1,92 @@
+extends layout
+append css
+  link(rel="stylesheet", href="/stylesheets/main.css")
+
+append content
+  .navbar.navbar-static-top
+    .container-fluid
+      .nav.navbar-form
+        .row
+          .col
+            .row
+              button.btn.btn-default(data-bind="click: function(){ exec_history.fold(!exec_history.fold()) }")
+                i.glyphicon(data-bind="css:{\
+                                        'glyphicon-plus' : exec_history.fold,\
+                                        'glyphicon-minus' : !exec_history.fold(),\
+                                      }",
+                            style="font-size:2em;")
+                br
+                | history
+          .col
+            .row
+              button.btn.btn-default(data-bind="click:add_note")
+                | add note
+            .row
+              button.btn.btn-default(data-bind="click:add_note")
+                | add note
+  hr.navhr
+
+  .container-fluid(data-bind='foreach : notes')
+    .note(data-bind="css:{\
+                        'current' : $data == $root.current_note()\
+                    },\
+                    click : function(){ $root.current_note($data) }")
+      .container-fluid
+        +ko('if : visible')
+          +ko("ifnot : fold")
+            .row
+                .form.form-horizontal
+                  .form-group
+                    .col-xs-9
+                      input.form-control(type="text",placeholder="name...",data-bind="value:name")
+                    .col-xs-3
+                      .btn-group
+                        button.btn.btn-default(data-bind="click: function(){fold(true)}")
+                          i.glyphicon.glyphicon-minus
+                        button.btn.btn-default(data-bind="click:exec")
+                          i.glyphicon.glyphicon-play
+                      .btn-group
+                        +ko('if : $parent.notes().length != 1 ')
+                          button.btn.btn-default(data-bind="click: $parent.remove_note")
+                            i.glyphicon.glyphicon-remove
+            .row
+              .col-xs-1
+              .col-xs-11
+                .editor(data-bind="editor")
+
+            +ko('if : res')
+              .res-container(data-bind='with : res')
+                each res in ['stdout','stderr','exceptions','exports']
+                  .row(data-bind="if : $data.#{res} && #{res}.length")
+
+                    .col-xs-1
+                      .res_label=res
+                    .col-xs-11
+                      pre(data-bind="text : #{res}")
+
+          +ko("if : fold")
+            .row
+              .form.form-horizontal
+                .form-group
+                  .col-xs-9
+                    .h3.title-fold(data-bind="text: name")
+                  .col-xs-3
+                    .btn-group
+                      button.btn.btn-default(data-bind="click: function(){fold(false)}")
+                        i.glyphicon.glyphicon-plus
+                      button.btn.btn-default(data-bind="click : toggle_res_fold")
+                        i.glyphicon(data-bind="css:{\
+                                                'glyphicon-chevron-down' : res_fold(),\
+                                                'glyphicon-chevron-up' : !res_fold(),\
+                                              }")
+            +ko('if : res')
+              .row.res-container
+                .collapse(data-bind="css:{ in : !res_fold() }")
+                  pre(data-bind="text : res().stdout")
+
+append js
+  script(type="application/javascript", src="//cdn.staticfile.org/ace/1.1.3/ace.js")
+  script(type="application/javascript", src="//cdn.staticfile.org/ace/1.1.3/ext-language_tools.js")
+  script.
+    var notes = !{JSON.stringify(notes)};
+  script(src="/javascripts/bookpage.js")

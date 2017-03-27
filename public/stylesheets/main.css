@@ -65,6 +65,7 @@ hr{
 .note {
     border: 1px solid transparent;
     border-left: 5px solid transparent;
+    border-radius: 5px;
     padding: 5px 10px 5px 15px;
 }
 
@@ -89,7 +90,7 @@ hr{
 
 
 .editor{
-  height : 400px;
+  height : 70px;
 }
 .navbar{
   margin-bottom:0;

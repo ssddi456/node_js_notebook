@@ -19,16 +19,35 @@ define([
 
   ko.bindingHandlers.editor = {
     'init' : function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+      var $element = $(element);
 
-      $(element).on('keyup keydown mousewheel',function( e ){
+      var min_lines = 5;
+      var max_lines = 20;
+      var lineheight = 14;
+
+      $element.on('keyup keydown mousewheel',function( e ){
         e.stopPropagation();
       });
 
       setTimeout(function() {
-        var editor = ace.edit(element);
 
-        editor.setValue(viewModel.code());
+        function resize( content ) {
+            var lines = (content.match(/\n/g)||'').length+1;
+
+            lines = Math.min( max_lines, Math.max(min_lines, lines));
+            console.log( lines );
+            var height = lines * lineheight;
+            $element.css('height', height);
+            editor.resize();
+        }
+
+        var editor = ace.edit(element);
+        var code = viewModel.code();
+        editor.setValue( code );
+        resize( code );
         editor.clearSelection();
+
+
 
         // throtll sync editor content to vm;      
         var change = ko.observable();
@@ -36,6 +55,10 @@ define([
 
         change.subscribe(function() {
           console.log( 'writed');
+          var content = editor.getValue();
+          
+          resize(content);
+
           viewModel.code( editor.getValue() );
         });
 
