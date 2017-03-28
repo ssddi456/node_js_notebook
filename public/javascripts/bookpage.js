@@ -1,8 +1,10 @@
 require([
+  './lib/model',
   './note',
   'ko',
   './lib/editor'
 ],function(
+  model,
   note,
   ko,
   editor
@@ -29,6 +31,9 @@ require([
   //    数据库连接？
   //    cookie管理？
   //
+  // all
+  //    exec_section
+  //    
   // notebook
   //    _id
   //    name
@@ -61,7 +66,109 @@ require([
   //    edit
   //    exec
   //    
-  //    
 
-  
+  var model_notebookset = model({
+  });
+
+  var notebookset = function() {
+      model_notebookset.create.call(this, arguments[0]);
+  };
+  notebookset.prototype = {
+    constructor : notebookset,
+    exec_section : function( code, done ) {
+        
+    },
+    add_notebook : function( done ) {
+      // 这里添加notebook
+    },
+    load_books : function( done ) {
+      // 加载所有的book
+      done(null, [{
+        id : 'test_id',
+        name : 'notebook1',
+        desc : '测试',
+        executing : false
+      }])
+    }
+  };
+
+  var model_notebook = model({
+      name : '',
+      desc : '',
+      createAt : {
+        readonly : true,
+        initial : 0,
+      },
+      executing : {
+        readonly : true,
+        initial : 0
+      },
+  });
+
+  var notebook = function() {
+      model_notebook.create.call(this, arguments[0]);
+  };
+  notebook.prototype = {
+    constructor : notebook,
+    update : function() {
+        // 更新数据
+    },
+    add_note : function() {
+        // 添加note
+    },
+    insert : function( node_before, done ) {
+        // 
+    },
+    move : function( node, node_before ) {
+        // 
+    },
+    exec : function() {
+        // 
+    },
+    load_notes: function( done ) {
+        //
+    }
+  };
+
+  var model_note = model({
+      parent_id : '',
+      type      : '',
+      code      : '',
+      order     : '',
+      visible   : 0,
+      context   : {},
+  });
+  model_note.prototype = {
+    constructor : model_note,
+    'delete' : function() {
+        
+    },
+
+    edit : function() {
+        
+    },
+    exec : function() {
+        
+    }
+  };
+
+
+  var main_vm = {
+    current_notebook : ko.observable(),
+    current_note : ko.observable(),
+    notebooks : ko.observableArray(),
+  };
+
+  ko.applyBindings(main_vm);
+
+  model_notebookset.load_books(function( err, notebooks ) {
+    if( !err ){
+
+      notebooks.forEach(function( book ) {
+          notebooks.push( model_notebook.create(book) );
+      });
+    }
+  });
+
+
 });
