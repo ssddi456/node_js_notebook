@@ -71,7 +71,7 @@ require([
   });
 
   var notebookset = function() {
-      model_notebookset.create.call(this, arguments[0]);
+      model_notebookset.prototype.create.call(this, arguments[0]);
   };
   notebookset.prototype = {
     constructor : notebookset,
@@ -92,6 +92,8 @@ require([
     }
   };
 
+  notebookset = new notebookset();
+
   var model_notebook = model({
       name : '',
       desc : '',
@@ -106,7 +108,9 @@ require([
   });
 
   var notebook = function() {
-      model_notebook.create.call(this, arguments[0]);
+      model_notebook.prototype.create.call(this, arguments[0]);
+
+      this.notes = ko.observableArray([]);
   };
   notebook.prototype = {
     constructor : notebook,
@@ -115,34 +119,90 @@ require([
     },
     add_note : function() {
         // 添加note
+      var _note = new note({
+        order : this.notes().length
+      });
+      this.notes.push(_note);
     },
-    insert : function( node_before, done ) {
+    insert : function( node_before ) {
         // 
+      node_before = this.notes.indexOf(node_before);
+
+      var notes = this.notes();
+      notes.slice(node_before).forEach(function( node ) {
+          node.order += 1;
+      });
+      var _note = new note({
+        order : node_before
+      });
+      this.notes.splice(node_before, 0, _note);
     },
     move : function( node, node_before ) {
         // 
     },
+    'delete' : function( vm, done ) {
+      this.notes.remove(vm);
+      // 发送删除请求
+    },
     exec : function() {
         // 
     },
+    initial : function() {
+        var self = this;
+        this.load_notes(function( err, docs ) {
+            docs.forEach(function(doc) {
+                self.notes.push(new note(doc));
+            });
+        });
+    },
     load_notes: function( done ) {
-        //
+        done(null, [
+          {
+            id : 'test_note1',
+            parent_id : this.id,
+            type : 'text',
+            code : '一段文字',
+            order : '0'
+          },
+          {
+            id : 'test_note2',
+            parent_id : this.id,
+            type : 'javascript',
+            code : 'var a = 1;',
+            order : '1'
+          },
+          {
+            id : 'test_note3',
+            parent_id : this.id,
+            type : 'javascript',
+            code : 'var a = 1;',
+            order : '2'
+          },
+        ]);
     }
   };
 
   var model_note = model({
-      parent_id : '',
+      parent_id : {
+        readonly : true
+      },
       type      : '',
-      code      : '',
+      code      : {
+        type : ko.observable,
+        initial : ''
+      },
       order     : '',
       visible   : 0,
-      context   : {},
+      context   : {
+        readonly : true,
+        initial : {}
+      },
   });
-  model_note.prototype = {
-    constructor : model_note,
-    'delete' : function() {
-        
-    },
+  var note = function() {
+      model_note.prototype.create.call(this, arguments[0]);
+  }
+  note.prototype = {
+    constructor : note,
 
     edit : function() {
         
@@ -157,16 +217,27 @@ require([
     current_notebook : ko.observable(),
     current_note : ko.observable(),
     notebooks : ko.observableArray(),
+
+    add_notebook : function() {
+        notebookset.add_notebook(function() {
+            
+        });
+    },
   };
 
   ko.applyBindings(main_vm);
 
-  model_notebookset.load_books(function( err, notebooks ) {
+  notebookset.load_books(function( err, notebooks ) {
     if( !err ){
 
       notebooks.forEach(function( book ) {
-          notebooks.push( model_notebook.create(book) );
+          main_vm.notebooks.push( new notebook(book) );
       });
+
+      var current_notebook = main_vm.notebooks()[0];
+      main_vm.current_notebook(current_notebook);
+
+      current_notebook.initial();
     }
   });
 

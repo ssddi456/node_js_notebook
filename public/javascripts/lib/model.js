@@ -57,14 +57,22 @@ define([
       var i = 0;
       var len = all_keys.length;
       var k;
+      var input;
+
       obj = obj || defaults;
       for(;i<len;i++){
         k = all_keys[i];
 
-        if( type[k] ){
-          this[k] = type[k](obj[k]);
+        if( k in obj ){
+          input = obj[k];
         } else {
-          this[k] = obj[k];
+          input = defaults[k];
+        }
+
+        if( type[k] ){
+          this[k] = type[k](input);
+        } else {
+          this[k] = input;
         }
       }
       if( obj.id ){
@@ -79,7 +87,7 @@ define([
       var k;
       for(;i<len;i++){
         k = update_keys[i];
-        ret[k] = this[k];
+        ret[k] = ko.utils.unwrapObservable(this[k]);
       }
 
       if( this.id ){

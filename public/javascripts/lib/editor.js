@@ -21,9 +21,9 @@ define([
     'init' : function(element, valueAccessor, allBindings, viewModel, bindingContext) {
       var $element = $(element);
 
-      var min_lines = 5;
+      var min_lines = 3;
       var max_lines = 20;
-      var lineheight = 14;
+      var lineheight = 19;
 
       $element.on('keyup keydown mousewheel',function( e ){
         e.stopPropagation();
@@ -43,15 +43,18 @@ define([
 
         var editor = ace.edit(element);
         var code = viewModel.code();
+
         editor.setValue( code );
         resize( code );
         editor.clearSelection();
 
 
-
         // throtll sync editor content to vm;      
         var change = ko.observable();
         editor.on("change", change.extend({ rateLimit: 500 }));
+        editor.setOptions({
+          fontSize: "16px"
+        });
 
         change.subscribe(function() {
           console.log( 'writed');
@@ -62,6 +65,7 @@ define([
           viewModel.code( editor.getValue() );
         });
 
+        // TODO : should use different theme and highlights
         editor.setTheme("ace/theme/monokai");
         editor.getSession().setMode("ace/mode/javascript");
 

@@ -28,4 +28,14 @@ router.get('/', function(req, res, next) {
   });
 });
 
+
+router.get('/bookpage', function(req, res, next) {
+
+
+  res.render('bookpage', { 
+    title: 'Node Note'
+  });
+
+});
+
 module.exports = router;
