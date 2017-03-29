@@ -191,8 +191,8 @@ require([
         type : ko.observable,
         initial : ''
       },
-      order     : '',
-      visible   : 0,
+      order     : 0,
+      visible   : 1,
       context   : {
         readonly : true,
         initial : {}
