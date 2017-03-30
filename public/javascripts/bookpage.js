@@ -9,7 +9,7 @@ require([
   ko,
   editor
 ){
-  
+  var noop = function() {};
   // 
   // 这将成为一个notebook的内容页
   // 新的notebook 每一个book内部是一个上下文有关的执行序列
@@ -74,21 +74,17 @@ require([
       model_notebookset.prototype.create.call(this, arguments[0]);
   };
   notebookset.prototype = {
+    __proto__ : model_notebookset,
     constructor : notebookset,
-    exec_section : function( code, done ) {
-        
-    },
+
     add_notebook : function( done ) {
       // 这里添加notebook
     },
     load_books : function( done ) {
-      // 加载所有的book
-      done(null, [{
-        id : 'test_id',
-        name : 'notebook1',
-        desc : '测试',
-        executing : false
-      }])
+      $.get('/bookpage/notebookset', 
+        function( res ) {
+          done( null, res.notebooks );
+        });
     }
   };
 
@@ -112,75 +108,100 @@ require([
 
       this.notes = ko.observableArray([]);
   };
-  notebook.prototype = {
-    constructor : notebook,
-    update : function() {
-        // 更新数据
-    },
-    add_note : function() {
-        // 添加note
-      var _note = new note({
-        order : this.notes().length
-      });
-      this.notes.push(_note);
-    },
-    insert : function( node_before ) {
-        // 
-      node_before = this.notes.indexOf(node_before);
 
-      var notes = this.notes();
-      notes.slice(node_before).forEach(function( node ) {
-          node.order += 1;
+  var p_notebook = new model_notebook();
+  notebook.prototype = p_notebook;
+  p_notebook.constructor = notebook;
+  p_notebook.update  = function() {
+      // 更新数据
+  };
+  p_notebook.add_note  = function() {
+      // 添加note
+    var self = this;
+    $.post('/bookpage/notebook/' + this.id + '/add',
+      function( doc ) {
+        var _note = new note(doc.note);
+
+        _note.order = self.notes().length;
+        _note.edit();
+
+        self.notes.push(_note);
       });
-      var _note = new note({
-        order : node_before
+  };
+  p_notebook.insert  = function( node_before ) {
+      // 
+    node_before = this.notes.indexOf(node_before);
+
+    var self = this;
+    var notes = this.notes();
+    notes.slice(node_before).forEach(function( node, idx ) {
+        node.order = 1 + idx + node_before;
+        node.edit();
+    });
+
+    $.post('/bookpage/notebook/' + this.id + '/add',
+      function( doc ) {
+        var _note = new note(doc.note);
+        _note.order = node_before;
+        _note.edit();
+        var rest = self.notes().length - node_before;
+        rest = self.notes.splice(node_before, rest);
+
+        self.notes.push(_note);
+        rest.forEach(function( node ) {
+          self.notes.push(node);
+        });
       });
-      this.notes.splice(node_before, 0, _note);
-    },
-    move : function( node, node_before ) {
-        // 
-    },
-    'delete' : function( vm, done ) {
-      this.notes.remove(vm);
-      // 发送删除请求
-    },
-    exec : function() {
-        // 
-    },
-    initial : function() {
-        var self = this;
-        this.load_notes(function( err, docs ) {
-            docs.forEach(function(doc) {
+
+  };
+  p_notebook.move = function( node, node_before ) {
+      // 
+  };
+  p_notebook['delete'] = function( vm, done ) {
+    var self = this;
+    $.post('/bookpage/notebook/'+ this.id +'/note/' + vm.id + '/delete', 
+      function() {
+          
+        var index = self.notes.indexOf(vm);
+        self.notes.remove(vm);
+        console.log( index );
+        self.notes.slice(index).forEach(function( node, idx ) {
+            node.order = index + idx;
+            node.edit();
+        });
+      });
+    // 发送删除请求
+  };
+  p_notebook.initial  = function() {
+      var self = this;
+      this.load_notes(function( err, docs ) {
+
+          docs
+            .sort(function(a,b ) {
+              console.log( a.order, b.order );
+                return a.order - b.order;
+            })
+            .forEach(function(doc) {
                 self.notes.push(new note(doc));
             });
-        });
-    },
-    load_notes: function( done ) {
-        done(null, [
-          {
-            id : 'test_note1',
-            parent_id : this.id,
-            type : 'text',
-            code : '一段文字',
-            order : '0'
-          },
-          {
-            id : 'test_note2',
-            parent_id : this.id,
-            type : 'javascript',
-            code : 'var a = 1;',
-            order : '1'
-          },
-          {
-            id : 'test_note3',
-            parent_id : this.id,
-            type : 'javascript',
-            code : 'var a = 1;',
-            order : '2'
-          },
-        ]);
-    }
+      });
   };
+  p_notebook.exec  = function(done) {
+    done = done || noop;
+    $.post('/bookpage/notebook/'+ this.parent_id + '/exec', 
+      function( res ) {
+          done();
+      });    
+  };
+  p_notebook.save  = function() {
+      
+  };
+  p_notebook.load_notes = function( done ) {
+    $.get('/bookpage/notebook/' + this.id,function( res ) {
+        done(null, res.notes);
+    });
+  };
+
 
   var model_note = model({
       parent_id : {
@@ -188,7 +209,9 @@ require([
       },
       type      : '',
       code      : {
-        type : ko.observable,
+        type : function( code ) {
+            return ko.observable( decodeURIComponent(code) );
+        },
         initial : ''
       },
       order     : 0,
@@ -200,16 +223,30 @@ require([
   });
   var note = function() {
       model_note.prototype.create.call(this, arguments[0]);
-  }
-  note.prototype = {
-    constructor : note,
-
-    edit : function() {
-        
-    },
-    exec : function() {
-        
-    }
+      var self = this;
+      this.code.subscribe(function() {
+          self.edit();
+      });
+      this.res = ko.observable();
+  };
+  var p_note = new model_note();
+  note.prototype = p_note;
+  p_note.constructor = note;
+  p_note.edit = function( done ) {
+    done = done || noop;
+    $.post('/bookpage/notebook/'+ this.parent_id +'/note/' + this.id, 
+      this.toJSON(),
+      done);
+  };
+  p_note.exec = function( done ) {
+    done = done || noop;
+    var self = this;
+    $.post('/bookpage/notebook/'+ this.parent_id +'/note/' + this.id + '/exec', 
+      function( res ) {
+        if( res.res ){
+          self.res(res.res);
+        }
+      });
   };
 
 
@@ -217,7 +254,9 @@ require([
     current_notebook : ko.observable(),
     current_note : ko.observable(),
     notebooks : ko.observableArray(),
-
+    exec_section : function( code, done ) {
+        
+    },
     add_notebook : function() {
         notebookset.add_notebook(function() {
             

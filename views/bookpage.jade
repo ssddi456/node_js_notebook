@@ -16,7 +16,7 @@ append content
             .btn-group
               button.btn.btn-default(data-bind="click:function(){ current_notebook().exec() }")
                 | exec notebook
-              button.btn.btn-default(data-bind="click:function(){ current_notebook().add_note()}")
+              button.btn.btn-default(data-bind="click:function(){ current_notebook().add_note() }")
                 | add note
 
           .btn-toolbar.pull-left(data-bind="if : current_note", style="margin-left:10px")
@@ -32,19 +32,17 @@ append content
 
   +ko('if : current_notebook')
     .container-fluid(data-bind='foreach : current_notebook().notes')
-      .note(data-bind="css:{\
-                          'current' : $data == $root.current_note()\
-                      },\
-                      click : function(){ $root.current_note($data) }")
-        .row
-          .col-xs-12
-            .editor(data-bind="editor")
+      div(data-bind='click : function(){ $root.current_note($data) }')
+        .note(data-bind="css:{ 'current' : $data == $root.current_note() } ")
+          .row
+            .col-xs-12
+              .editor(data-bind="editor")
 
-          +ko('if : $data.res')
+        +ko('if : $data.res')
+          .note-res(data-bind="css:{ 'current' : $data == $root.current_note() } ")
             .res-container(data-bind='with : $data.res')
               each res in ['stdout','stderr','exceptions','exports']
                 .row(data-bind="if : $data.#{res} && #{res}.length")
-
                   .col-xs-1
                     .res_label=res
                   .col-xs-11

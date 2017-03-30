@@ -33,9 +33,12 @@ define([
 
         function resize( content ) {
             var lines = (content.match(/\n/g)||'').length+1;
+            if( content[content.length - 1] != '\n' ){
+              lines += 1;
+            }
 
             lines = Math.min( max_lines, Math.max(min_lines, lines));
-            console.log( lines );
+
             var height = lines * lineheight;
             $element.css('height', height);
             editor.resize();
@@ -57,7 +60,6 @@ define([
         });
 
         change.subscribe(function() {
-          console.log( 'writed');
           var content = editor.getValue();
           
           resize(content);

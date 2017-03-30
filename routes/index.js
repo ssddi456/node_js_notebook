@@ -26,16 +26,8 @@ router.get('/', function(req, res, next) {
       bootstrap: notes_info.init_bootstrap
     });
   });
-});
-
-
-router.get('/bookpage', function(req, res, next) {
-
-
-  res.render('bookpage', { 
-    title: 'Node Note'
-  });
 
 });
+
 
 module.exports = router;

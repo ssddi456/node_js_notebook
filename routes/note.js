@@ -11,8 +11,6 @@ router.get('/', function(req, res, next) {
   res.send('respond with a resource');
 });
 
-
-
 var storage = require('../lib/storage');
 var uuid = require('../lib/uuid');
 
