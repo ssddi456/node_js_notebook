@@ -79,11 +79,18 @@ require([
 
     add_notebook : function( done ) {
       // 这里添加notebook
+      $.post('/bookpage/notebook/add', 
+        function( res ) {
+          done( null, res.notebook );
+        });
     },
     load_books : function( done ) {
       $.get('/bookpage/notebookset', 
         function( res ) {
-          done( null, res.notebooks );
+          done( null, 
+            res.notebooks.sort(function( a, b ) {
+              return b.createAt - a.createAt;
+            }));
         });
     }
   };
@@ -188,9 +195,20 @@ require([
   };
   p_notebook.exec  = function(done) {
     done = done || noop;
-    $.post('/bookpage/notebook/'+ this.parent_id + '/exec', 
+    var self = this;
+    $.post('/bookpage/notebook/'+ this.id + '/exec', 
       function( res ) {
-          done();
+          var reses = res.reses;
+          var notes = self.notes();
+          reses.forEach(function( res ) {
+              notes.some(function( note ) {
+                if( note.order == res.order ){
+                  note.context = res.context;
+                  note.res(res.res);
+                  return true;
+                }
+              });
+          });
       });    
   };
   p_notebook.save  = function() {
@@ -254,13 +272,42 @@ require([
     current_notebook : ko.observable(),
     current_note : ko.observable(),
     notebooks : ko.observableArray(),
+
     exec_section : function( code, done ) {
         
     },
+
     add_notebook : function() {
-        notebookset.add_notebook(function() {
-            
+        notebookset.add_notebook(function(err, notebook_doc) {
+          if( notebook_doc ){
+            main_vm.notebooks.unshift(new notebook(notebook_doc));
+          }
         });
+    },
+
+    show_notebooks : ko.observable( false ),
+
+    remove_notebook : function( notebook, e ) {
+
+      e.stopPropagation();
+
+      var self = main_vm;
+      $.post('/bookpage/notebook/'+ notebook.id +'/delete',
+        function() {
+          self.notebooks.remove(notebook);
+          if( notebook == main_vm.current_notebook() ){
+            main_vm.current_notebook(undefined);
+          }
+        })
+    },
+
+    switch_notebook : function( notebook ) {
+      var current = this.current_notebook();
+      if( current ){
+        current.notes([]);
+      }
+      this.current_notebook(notebook);  
+      notebook.initial();
     },
   };
 
@@ -273,10 +320,7 @@ require([
           main_vm.notebooks.push( new notebook(book) );
       });
 
-      var current_notebook = main_vm.notebooks()[0];
-      main_vm.current_notebook(current_notebook);
-
-      current_notebook.initial();
+      main_vm.switch_notebook(main_vm.notebooks()[0]);
     }
   });
 

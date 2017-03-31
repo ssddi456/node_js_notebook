@@ -62,6 +62,23 @@ hr{
     margin-top: 5px;
 }
 
+.notebook_list{
+  display: none;
+  width: 25%;
+  position: fixed;
+  top: 50px;
+  bottom: 0;
+  left: 0;
+  z-index: 99999;
+  overflow-y: auto;
+  overflow-x: visible;
+  padding-left: 10px;
+}
+
+.notebook_list.active{
+  display: block;
+}
+
 .note {
     border: 1px solid transparent;
     border-left: 5px solid transparent;
@@ -95,7 +112,7 @@ hr{
     overflow: auto;
 }
 
-.note .res_label{
+.note-res .res_label, .note .res_label{
     padding: 9.5px 0;
 }
 

@@ -1,5 +1,4 @@
 var path = require('path');
-var exec_code = require('../lib/exec_code');
 var express = require('express');
 var util = require('util');
 var fs = require('fs');
@@ -26,6 +25,10 @@ var model_notebook = model({
   createAt : {
     readonly : true,
     initial : 0
+  },
+  visible :{
+    readonly : true,
+    initial : 1
   }
 });
 
@@ -67,7 +70,10 @@ router.get('/', function(req, resp, next) {
 
 /* GET users listing. */
 router.get('/notebookset', function(req, resp, next) {
-  storage.find({}, function( err, docs ) {
+  storage.find({
+    visible : 1,
+    parent_id : { $exists : false }
+  }, function( err, docs ) {
     if( !err ){
       resp.json({
         err : 0,
@@ -80,6 +86,7 @@ router.get('/notebookset', function(req, resp, next) {
 });
 
 router.get('/notebook', function( req, resp, next ) {
+
   var query = req.query;
   var body = req.body;
 
@@ -87,10 +94,12 @@ router.get('/notebook', function( req, resp, next ) {
     throw new Error('illegal input');
   }
 
-  query = { _id : query.id };
+  query = { 
+    _id : query.id,
+    visible : 1
+  };
 
   storage.findOne( query, function( err, doc ) {
-      
       if( !err && doc ) {
         resp.json({ 
           err : 0,
@@ -100,6 +109,7 @@ router.get('/notebook', function( req, resp, next ) {
         next(err);
       }
   });
+
 });
 
 router.post('/notebook/add', function( req, resp, next ) {
@@ -181,6 +191,42 @@ router.get('/notebook/:id/', function( req, resp, next ) {
       }
 
   });
+});
+
+router.post('/notebook/:id/delete', function( req, resp, next ) {
+  var query = req.query;
+  var body = req.body;
+  var params = req.params;
+
+  if( !params.id ){
+    throw new Error('illegal input');
+  }
+
+  query = { _id : params.id };
+
+  storage.findOne( query, function( err, doc ) {
+
+      if( !err && doc ) {
+        storage.update( 
+          query,
+          { visible : 0 }, 
+          function( err, doc ) {
+            if( !err )  {
+              resp.json({
+                err : 0,
+                note : model_note.wrap(doc)
+              });
+            } else {
+              next(err);
+            }
+          })
+      } else {
+        next(err);
+      }
+
+  });
+
+
 });
 
 router.post('/notebook/:id/add', function( req, resp, next ) {
@@ -276,6 +322,8 @@ router.post('/notebook/:id/note/:note_id', function( req, resp, next ) {
   });
 });
 
+var exec_queue = require('../lib/exec_queue');
+var exec_with_context = exec_queue.do_exec;
 
 // 
 // 执行代码需要弄到一个队列里。
@@ -290,15 +338,40 @@ router.post('/notebook/:id/exec', function( req, resp, next ) {
   query = { _id : params.id };
 
   // 这里需要依次执行这个notebooks里的所有任务
-  storage.findOne( query, function( err, doc ) {
-    if( !err && doc ) {
-      resp.json({ err : 0 });
+  storage.findOne( query, function( err, notebook_doc ) {
+    if( !err && notebook_doc ) {
+      var note_query = { parent_id : params.id };
+      if( body.from ){
+        note_query.order = { $gte : body.from };
+      }
+
+      storage.find(note_query, function( err, docs) {
+        if( !err && docs.length ){
+          
+          exec_queue.get_queue(params.id).push({
+              storage : storage,
+              notes : docs
+            }, 
+            function( err, reses ) {
+              resp.json({
+                err : 0,
+                reses : reses
+              });
+            });
+
+        } else {
+          next(err || new Error('notebook dont have a note'));
+        }
+      });
+
+
     } else {
-      next();
+      next( err || new Error('notebook didnt exists.') );
     }
   });
 
 });
+
 
 router.post('/notebook/:id/note/:note_id/exec', function( req, resp, next ) {
   var query = req.query;
@@ -330,35 +403,23 @@ router.post('/notebook/:id/note/:note_id/exec', function( req, resp, next ) {
 
 
       function do_exec( context ) {
-        context = context || {};
-        var code = '\nvar context = ' + JSON.stringify(context) + ';\n';
-        code += decodeURIComponent(note_doc.code);
-        var spliter = '::context' + Date.now() + '--'+ Math.random() + '::';
-        code += '\n; console.log("\\n' + spliter +'" + JSON.stringify(context));\n';
 
-        exec_code( code, function( err, res ) {
+        exec_with_context(note_doc.code, context, function( err, res ) {
             if( err ){
               next(err);
             } else {
-              var stdout = res.stdout;
-              stdout = stdout.split('\n' + spliter);
-
-              debug('stdout', stdout, res);
-
-              res.stdout = stdout[0];
-              var context = JSON.parse(stdout[1] || '{}');
-
               resp.json({
                  err : 0,
-                 res : res,
-                 context : context
+                 res : res.res,
+                 context : res.context
               });
 
               storage.update({ _id : note_doc._id }, { $set : { context : context} }, function(err, res) {
                   debug('note context updates');
               });
             }
-        });
+        })
+
       };
 
     } else {

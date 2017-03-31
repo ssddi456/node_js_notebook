@@ -9,8 +9,8 @@ append content
         .row
           .btn-toolbar.pull-left
             .btn-group
-              button.btn.btn-default(data-bind="click:function(){}")
-                | switch notebook
+              button.btn.btn-default(data-bind="click:function(){ show_notebooks(!show_notebooks())}")
+                | notebooks
 
           .btn-toolbar.pull-left(data-bind="if : current_notebook", style="margin-left:10px")
             .btn-group
@@ -29,6 +29,23 @@ append content
                 | delete note
 
   hr.navhr
+  
+  .notebook_list(data-bind="css: { active : show_notebooks }")
+    //- div(style="heigth:50px")
+    .container-fluid
+      .form.form-horizontal
+        .form-group
+          button.btn.btn-default(data-bind="click:add_notebook")
+            | add notebook
+
+    ul.list-group(data-bind="foreach : notebooks")
+      li.list-group-item(data-bind="css:{ active: $data == $root.current_notebook() },\
+                                    click: function(){ $root.switch_notebook( $data ); }")
+        //- span.badge 14
+        .pull-right
+          .btn.btn-default.btn-xs(data-bind="click: $root.remove_notebook")
+            i.glyphicon.glyphicon-remove
+        span(data-bind="text: id")
 
   +ko('if : current_notebook')
     .container-fluid(data-bind='foreach : current_notebook().notes')
