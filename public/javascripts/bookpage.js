@@ -1,9 +1,11 @@
 require([
+  './lib/modal',
   './lib/model',
   './note',
   'ko',
   './lib/editor'
 ],function(
+  modal,
   model,
   note,
   ko,
@@ -98,8 +100,14 @@ require([
   notebookset = new notebookset();
 
   var model_notebook = model({
-      name : '',
-      desc : '',
+      name : {
+        type : ko.observable,
+        initial: '',
+      },
+      desc : {
+        type : ko.observable,
+        initial: '',
+      },
       createAt : {
         readonly : true,
         initial : 0,
@@ -119,8 +127,15 @@ require([
   var p_notebook = new model_notebook();
   notebook.prototype = p_notebook;
   p_notebook.constructor = notebook;
-  p_notebook.update  = function() {
-      // 更新数据
+  p_notebook.save  = function( done ) {
+    var self = this;
+    done = done || noop;
+    // 更新数据
+    $.post('/bookpage/notebook/' + this.id,
+      this.toJSON(),
+      function() {
+          done();
+      });
   };
   p_notebook.add_note  = function() {
       // 添加note
@@ -130,7 +145,7 @@ require([
         var _note = new note(doc.note);
 
         _note.order = self.notes().length;
-        _note.edit();
+        _note.save();
 
         self.notes.push(_note);
       });
@@ -150,7 +165,7 @@ require([
       function( doc ) {
         var _note = new note(doc.note);
         _note.order = node_before;
-        _note.edit();
+        _note.save();
         var rest = self.notes().length - node_before;
         rest = self.notes.splice(node_before, rest);
 
@@ -211,9 +226,6 @@ require([
           });
       });    
   };
-  p_notebook.save  = function() {
-      
-  };
   p_notebook.load_notes = function( done ) {
     $.get('/bookpage/notebook/' + this.id,function( res ) {
         done(null, res.notes);
@@ -243,14 +255,14 @@ require([
       model_note.prototype.create.call(this, arguments[0]);
       var self = this;
       this.code.subscribe(function() {
-          self.edit();
+          self.save();
       });
       this.res = ko.observable();
   };
   var p_note = new model_note();
   note.prototype = p_note;
   p_note.constructor = note;
-  p_note.edit = function( done ) {
+  p_note.save = function( done ) {
     done = done || noop;
     $.post('/bookpage/notebook/'+ this.parent_id +'/note/' + this.id, 
       this.toJSON(),
@@ -286,7 +298,13 @@ require([
     },
 
     show_notebooks : ko.observable( false ),
-
+    edit_notebook : function( notebook, e) {
+      e.stopPropagation();
+      // do edit here;
+      modal.notebook_edit({ data : notebook }, function() {
+          notebook.save();
+      })
+    },
     remove_notebook : function( notebook, e ) {
 
       e.stopPropagation();

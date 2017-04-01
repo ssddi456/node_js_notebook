@@ -85,32 +85,6 @@ router.get('/notebookset', function(req, resp, next) {
   })
 });
 
-router.get('/notebook', function( req, resp, next ) {
-
-  var query = req.query;
-  var body = req.body;
-
-  if( !query.id ){
-    throw new Error('illegal input');
-  }
-
-  query = { 
-    _id : query.id,
-    visible : 1
-  };
-
-  storage.findOne( query, function( err, doc ) {
-      if( !err && doc ) {
-        resp.json({ 
-          err : 0,
-          notebook : model_notebook.wrap(doc)
-        });
-      } else {
-        next(err);
-      }
-  });
-
-});
 
 router.post('/notebook/add', function( req, resp, next ) {
   var query = req.query;
@@ -134,19 +108,17 @@ router.post('/notebook/add', function( req, resp, next ) {
   });
 });
 
-router.post('/notebook', function( req, resp, next ) {
+router.post('/notebook/:id', function( req, resp, next ) {
   var query = req.query;
   var body = req.body;
-  if( !query.id ){
-    throw new Error('illegal input');
-  }
+  var params = req.params;
 
-  query = { _id : query.id };
+  query = { _id : params.id };
   
   var notebook_doc = model_notebook.unwrap(body);
   storage.findOne( query, function( err, doc ) {
      if( !err && doc ) {
-        storage.update(query, notebook_doc.doc, function( err ) {
+        storage.update(query, { $set : notebook_doc.doc }, function( err ) {
           if( !err ){
             resp.json({ 
               err : 0
@@ -321,6 +293,34 @@ router.post('/notebook/:id/note/:note_id', function( req, resp, next ) {
 
   });
 });
+router.get('/notebook/:id/export', function( req, resp, next ) {
+  var query = req.query;
+  var body = req.body;
+  var params = req.params;
+
+  query = { _id : params.id };
+
+  storage.findOne( query, function( err, doc ) {
+    if( !err && doc ) {
+      storage.find({ parent_id : params.id }, function( err, docs ) {
+        if( !err ){
+          docs.sort(function( a, b ) {
+              return a.order - b.order;
+          }).forEach(function( note ) {
+            resp.write( decodeURIComponent(note.code) );
+            resp.write( '\n' );
+          });
+          resp.end('');
+        } else {
+          next(err);
+        }
+      });
+    } else {
+      next(err);
+    }
+  });
+
+});
 
 var exec_queue = require('../lib/exec_queue');
 var exec_with_context = exec_queue.do_exec;
@@ -395,6 +395,7 @@ router.post('/notebook/:id/note/:note_id/exec', function( req, resp, next ) {
         order : note_doc.order - 1
       }, function( err, prev_note ) {
         if( !err && prev_note ) {
+          debug('prev_note', prev_note);
           do_exec(prev_note.context);
         } else {
           next(err || new Error('prev note not found'));
@@ -414,9 +415,13 @@ router.post('/notebook/:id/note/:note_id/exec', function( req, resp, next ) {
                  context : res.context
               });
 
-              storage.update({ _id : note_doc._id }, { $set : { context : context} }, function(err, res) {
+              storage.update(
+                { _id : note_doc._id }, 
+                { $set : { context : res.context } }, 
+                { upsert : true },
+                function(err, res) {
                   debug('note context updates');
-              });
+                });
             }
         })
 

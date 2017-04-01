@@ -73,6 +73,7 @@ hr{
   overflow-y: auto;
   overflow-x: visible;
   padding-left: 10px;
+  background-color: rgba(182, 195, 195, 0.3);
 }
 
 .notebook_list.active{

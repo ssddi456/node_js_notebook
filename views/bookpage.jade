@@ -3,7 +3,7 @@ append css
   link(rel="stylesheet", href="/stylesheets/main.css")
 
 append content
-  .navbar.navbar-static-top
+  .navbar.navbar-static-top(style="position:fixed;width:100%;")
     .container-fluid
       .nav.navbar-form
         .row
@@ -18,6 +18,11 @@ append content
                 | exec notebook
               button.btn.btn-default(data-bind="click:function(){ current_notebook().add_note() }")
                 | add note
+              a.btn.btn-default(
+                target="blank",
+                data-bind="attr:{ href: '/bookpage/notebook/' + current_notebook().id +'/export' }")
+                i.glyphicon.glyphicon-export
+                | exports
 
           .btn-toolbar.pull-left(data-bind="if : current_note", style="margin-left:10px")
             .btn-group
@@ -25,7 +30,7 @@ append content
                 | insert note before
               button.btn.btn-default(data-bind="click:function(){ current_note().exec() }")
                 | exec note
-              button.btn.btn-default(data-bind="click:function(){ current_notebook().delete(current_note()) }")
+              button.btn.btn-danger(data-bind="click:function(){ current_notebook().delete(current_note()) }")
                 | delete note
 
   hr.navhr
@@ -42,13 +47,15 @@ append content
       li.list-group-item(data-bind="css:{ active: $data == $root.current_notebook() },\
                                     click: function(){ $root.switch_notebook( $data ); }")
         //- span.badge 14
-        .pull-right
+        .btn-group.pull-right
+          .btn.btn-default.btn-xs(data-bind="click: $root.edit_notebook")
+            i.glyphicon.glyphicon-edit
           .btn.btn-default.btn-xs(data-bind="click: $root.remove_notebook")
             i.glyphicon.glyphicon-remove
-        span(data-bind="text: id")
+        span(data-bind="text: name() || id, attr:{ title : desc }")
 
   +ko('if : current_notebook')
-    .container-fluid(data-bind='foreach : current_notebook().notes')
+    .container-fluid(data-bind='foreach : current_notebook().notes', style="margin-top:50px;")
       div(data-bind='click : function(){ $root.current_note($data) }')
         .note(data-bind="css:{ 'current' : $data == $root.current_note() } ")
           .row
@@ -64,6 +71,26 @@ append content
                     .res_label=res
                   .col-xs-11
                     pre(data-bind="text : #{res}")
+
+  #notebook_edit.modal(role='dialog', tabindex='-1')
+    .modal-dialog(role='document')
+      .modal-content
+        .modal-header
+          button.close(type='button', data-dismiss='modal', aria-label='Close')
+            span(aria-hidden='true') ×
+          h4.modal-title edit notebook
+        .modal-body
+          .form
+            .form-group
+              label name
+              input.form-control(type='text', placeholder='name', name="name")
+            .form-group
+              label desc
+              textarea.form-control(type='text', placeholder='desc', name="desc")
+
+        .modal-footer
+          button.btn.btn-default(type='button', data-dismiss='modal') cancel
+          button.btn.btn-primary(type='button', data-label="confirm") confirm
 
 
 append js
