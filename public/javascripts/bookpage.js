@@ -1,10 +1,12 @@
 require([
+  './lib/api',
   './lib/modal',
   './lib/model',
   './note',
   'ko',
   './lib/editor'
 ],function(
+  api,
   modal,
   model,
   note,
@@ -81,7 +83,7 @@ require([
 
     add_notebook : function( done ) {
       // 这里添加notebook
-      $.post('/bookpage/notebook/add', 
+      api('/bookpage/notebook/add', 
         function( res ) {
           done( null, res.notebook );
         });
@@ -131,7 +133,7 @@ require([
     var self = this;
     done = done || noop;
     // 更新数据
-    $.post('/bookpage/notebook/' + this.id,
+    api('/bookpage/notebook/' + this.id,
       this.toJSON(),
       function() {
           done();
@@ -140,7 +142,7 @@ require([
   p_notebook.add_note  = function() {
       // 添加note
     var self = this;
-    $.post('/bookpage/notebook/' + this.id + '/add',
+    api('/bookpage/notebook/' + this.id + '/add',
       function( doc ) {
         var _note = new note(doc.note);
 
@@ -161,7 +163,7 @@ require([
         node.edit();
     });
 
-    $.post('/bookpage/notebook/' + this.id + '/add',
+    api('/bookpage/notebook/' + this.id + '/add',
       function( doc ) {
         var _note = new note(doc.note);
         _note.order = node_before;
@@ -181,7 +183,7 @@ require([
   };
   p_notebook['delete'] = function( vm, done ) {
     var self = this;
-    $.post('/bookpage/notebook/'+ this.id +'/note/' + vm.id + '/delete', 
+    api('/bookpage/notebook/'+ this.id +'/note/' + vm.id + '/delete', 
       function() {
           
         var index = self.notes.indexOf(vm);
@@ -211,7 +213,7 @@ require([
   p_notebook.exec  = function(done) {
     done = done || noop;
     var self = this;
-    $.post('/bookpage/notebook/'+ this.id + '/exec', 
+    api('/bookpage/notebook/'+ this.id + '/exec', 
       function( res ) {
           var reses = res.reses;
           var notes = self.notes();
@@ -264,14 +266,14 @@ require([
   p_note.constructor = note;
   p_note.save = function( done ) {
     done = done || noop;
-    $.post('/bookpage/notebook/'+ this.parent_id +'/note/' + this.id, 
+    api('/bookpage/notebook/'+ this.parent_id +'/note/' + this.id, 
       this.toJSON(),
       done);
   };
   p_note.exec = function( done ) {
     done = done || noop;
     var self = this;
-    $.post('/bookpage/notebook/'+ this.parent_id +'/note/' + this.id + '/exec', 
+    api('/bookpage/notebook/'+ this.parent_id +'/note/' + this.id + '/exec', 
       function( res ) {
         if( res.res ){
           self.res(res.res);
@@ -310,7 +312,7 @@ require([
       e.stopPropagation();
 
       var self = main_vm;
-      $.post('/bookpage/notebook/'+ notebook.id +'/delete',
+      api('/bookpage/notebook/'+ notebook.id +'/delete',
         function() {
           self.notebooks.remove(notebook);
           if( notebook == main_vm.current_notebook() ){

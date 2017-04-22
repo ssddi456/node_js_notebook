@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-process.env.DEBUG = '* -send -express:*'
+process.env.DEBUG = '* -send -express:* -body-parser:*'
 
 if( !process.env.PM2_HOME ){
 

@@ -32,6 +32,11 @@ append content
                 | exec note
               button.btn.btn-danger(data-bind="click:function(){ current_notebook().delete(current_note()) }")
                 | delete note
+              a.btn.btn-default(
+                target="blank",
+                data-bind="attr:{ href: '/bookpage/notebook/' + current_notebook().id +'/note/' + current_note().id + '/export_context' }")
+                i.glyphicon.glyphicon-export
+                | exports
 
   hr.navhr
   
@@ -92,6 +97,11 @@ append content
           button.btn.btn-default(type='button', data-dismiss='modal') cancel
           button.btn.btn-primary(type='button', data-label="confirm") confirm
 
+  #loading.modal(role='dialog', tabindex='-1')
+    .modal-dialog(role='document')
+      .modal-content
+        .modal-body
+          div(style="height:300px;background:url(/images/loading.gif) center no-repeat;background-size:contain;")
 
 append js
   script(type="application/javascript", src="//cdn.staticfile.org/ace/1.1.3/ace.js")

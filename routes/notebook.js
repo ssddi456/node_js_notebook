@@ -322,8 +322,31 @@ router.get('/notebook/:id/export', function( req, resp, next ) {
 
 });
 
+router.get('/notebook/:id/note/:note_id/export_context', function( req, resp, next ) {
+  var query = req.query;
+  var body = req.body;
+  var params = req.params;
+
+  query = { 
+    _id : params.note_id,
+    parent_id : params.id
+  };
+
+  storage.findOne( query, function( err, doc ) {
+    if( !err && doc ) {
+      resp.write( JSON.stringify((doc.context || {}).context) );
+      resp.end('');
+    } else {
+      next(err);
+    }
+  });
+
+});
+
 var exec_queue = require('../lib/exec_queue');
 var exec_with_context = exec_queue.do_exec;
+
+var slow_pull = require('../lib/slow_pull');
 
 // 
 // 执行代码需要弄到一个队列里。
@@ -348,15 +371,34 @@ router.post('/notebook/:id/exec', function( req, resp, next ) {
       storage.find(note_query, function( err, docs) {
         if( !err && docs.length ){
           
-          exec_queue.get_queue(params.id).push({
+          slow_pull.wrapper(function( context, done ) {
+
+            exec_queue.get_queue(params.id).push(context, done)
+
+          }, function( err, reses ) {
+              debug( 'format out', err, reses );
+              return {
+                err : err || 0,
+                reses : reses || [],
+              };
+
+          })({
               storage : storage,
               notes : docs
-            }, 
+            },
             function( err, reses ) {
-              resp.json({
-                err : 0,
-                reses : reses
-              });
+              if( err ){
+                next(err);
+              } else {
+                if( reses.pull_id ){
+                  resp.json(reses);
+                } else {
+                  resp.json({
+                    err : 0,
+                    reses : reses
+                  });
+                }
+              }
             });
 
         } else {
@@ -385,6 +427,23 @@ router.post('/notebook/:id/note/:note_id/exec', function( req, resp, next ) {
 
   storage.findOne( query, function( err, note_doc ) {
     if( !err && note_doc ) {
+      var exec_a_note = slow_pull.wrapper(function( context, done ) {
+        exec_with_context(note_doc.code, context, function( err, res ) {
+            if( err ){
+              done(err);
+            } else {
+              done(err, res);
+
+              storage.update(
+                { _id : note_doc._id }, 
+                { $set : { context : res.context } }, 
+                { upsert : true },
+                function(err, res) {
+                  debug('note context updates');
+                });
+            }
+        })
+      });
 
       if( note_doc.order == 0 ){
         return do_exec();
@@ -403,28 +462,23 @@ router.post('/notebook/:id/note/:note_id/exec', function( req, resp, next ) {
       });
 
 
-      function do_exec( context ) {
 
-        exec_with_context(note_doc.code, context, function( err, res ) {
+      function do_exec( context ) {
+        exec_a_note(context, function( err, res ) {
             if( err ){
               next(err);
             } else {
-              resp.json({
-                 err : 0,
-                 res : res.res,
-                 context : res.context
-              });
-
-              storage.update(
-                { _id : note_doc._id }, 
-                { $set : { context : res.context } }, 
-                { upsert : true },
-                function(err, res) {
-                  debug('note context updates');
+              if( res.pull_id ){
+                resp.json(res);
+              } else {
+                resp.json({
+                   err : 0,
+                   res : res.res,
+                   context : res.context
                 });
+              }
             }
-        })
-
+        });
       };
 
     } else {
@@ -433,4 +487,20 @@ router.post('/notebook/:id/note/:note_id/exec', function( req, resp, next ) {
   });
 
 });
+
+router.post('/slow_pull/:id', function( req, resp, next ) {
+  var query = req.query;
+  var body = req.body;
+  var params = req.params;
+
+  if( !params.id ){
+    throw new Error('illegal input');
+  }
+  var res = slow_pull.check(params.id);
+  if( res ){
+    resp.json(res);
+  } else {
+    next(new Error('async task not found'));
+  }
+})
 
