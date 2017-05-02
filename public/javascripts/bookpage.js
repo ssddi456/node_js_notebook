@@ -299,7 +299,7 @@ require([
         });
     },
 
-    show_notebooks : ko.observable( false ),
+    show_notebooks : ko.observable( true ),
     edit_notebook : function( notebook, e) {
       e.stopPropagation();
       // do edit here;
@@ -340,7 +340,11 @@ require([
           main_vm.notebooks.push( new notebook(book) );
       });
 
-      main_vm.switch_notebook(main_vm.notebooks()[0]);
+      if( notebooks.length ){
+        main_vm.switch_notebook(main_vm.notebooks()[0]);
+      } else {
+        main_vm.show_notebooks(true);
+      }
     }
   });
 

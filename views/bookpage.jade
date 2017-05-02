@@ -41,13 +41,16 @@ append content
   hr.navhr
   
   .notebook_list(data-bind="css: { active : show_notebooks }")
-    //- div(style="heigth:50px")
     .container-fluid
-      .form.form-horizontal
-        .form-group
+      .row
+        .btn-group.pull-right
           button.btn.btn-default(data-bind="click:add_notebook")
             | add notebook
-
+        .btn-group
+          button.btn.btn-default(data-bind="click:function(){show_notebooks(false)}")
+            i.glyphicon.glyphicon-remove
+      hr
+      br
     ul.list-group(data-bind="foreach : notebooks")
       li.list-group-item(data-bind="css:{ active: $data == $root.current_notebook() },\
                                     click: function(){ $root.switch_notebook( $data ); }")
