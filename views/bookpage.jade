@@ -22,7 +22,7 @@ append content
                 target="blank",
                 data-bind="attr:{ href: '/bookpage/notebook/' + current_notebook().id +'/export' }")
                 i.glyphicon.glyphicon-export
-                | exports
+                | code
 
           .btn-toolbar.pull-left(data-bind="if : current_note", style="margin-left:10px")
             .btn-group
@@ -36,7 +36,7 @@ append content
                 target="blank",
                 data-bind="attr:{ href: '/bookpage/notebook/' + current_notebook().id +'/note/' + current_note().id + '/export_context' }")
                 i.glyphicon.glyphicon-export
-                | exports
+                | context
 
   hr.navhr
   
